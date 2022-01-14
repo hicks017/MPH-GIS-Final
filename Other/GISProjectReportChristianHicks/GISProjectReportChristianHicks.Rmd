@@ -1,0 +1,130 @@
+---
+title: San Diego County Access to Healthy Foods and Prevalence of High Blood Cholesterol, A Cross-sectional Examination of 2019
+author:
+    name: Christian Hicks
+    email: chicks5799@sdsu.edu
+    affiliation: San Diego State University School of Public Health
+abstract: |
+  **Background:** High cholesterol is a risk factor for heart disease and  mortality. Poor diet can lead to the development of high cholesterol, therefore it is important to study individuals' access to healthy foods. **Methods:** High cholesterol prevalences and grocery store locations were examined in San Diego County Census tracts to determine the distributions and if the two are associated. Data was obtained from sources provided by the CDC and Esri. **Results:** It was observed that a moderate negative association was present between high cholesterol prevalence and number of nearby grocery stores (R = -0.32, p<.001). **Conclusion:** These results suggest that access to grocery stores may affect the health status of San Diego County residents.
+
+date: "`r Sys.Date()`"
+journal: PH 682
+bibliography: GISreferences.bib
+#linenumbers: true
+#numbersections: true
+csl: apa.csl
+output: rticles::elsevier_article
+link-citations: true
+urlcolor: blue
+header-includes:
+  \usepackage{setspace}\doublespacing
+  \usepackage{floatrow}
+  \floatsetup[figure]{capposition=top}
+  \floatsetup[table]{capposition=top}
+---
+
+```{r setup, include=FALSE}
+pacman::p_load("tidyverse", "tableone", "knitr", "kableExtra")
+df <- readxl::read_xlsx("../SDTracts_GrocBuff_Summarize_TableToExcel.xlsx")
+
+df <- df %>% rename(
+  totalpop = TotalPopulation,
+  chol_prev = HIGHCHOL_CrudePrev,
+  prev_95_ci = HIGHCHOL_Crude95CI,
+  tract_area = Tract_Sq_Miles,
+  grocer_count = Polygon_Count
+)
+tab_vars <- c("chol_prev", "grocer_count", "totalpop", "tract_area")
+non_vars <- c("grocer_count", "totalpop", "tract_area")
+```
+
+Introduction
+============
+
+#### Background
+
+Heart disease was the leading cause of death in San Diego County between 1999 and 2019 with a crude rate of 210 deaths per 100,000 adults [@wonder2019]. Diabetes was ranked as the seventh leading cause of death in this region and time period with a crude rate of 25 deaths per 100,000 adults [@wonder2019]. Recent studies have focused on examining features of U.S. neighborhood structures and how it may affect individual health [@havranek2015; @morris19]. Specifically the Multi-Ethnic Study of Atherosclerosis (MESA), a longitudinal study of cardiovascular disease, linked access to healthy food with reduced risk factors of morbidity [@auchincloss2013].
+
+#### Purpose
+
+San Diego County has many urban, suburban, and rural neighborhoods with various levels of access to grocery stores. This study explored how the count and location of grocery stores related to prevalence of high cholesterol within census tracts. Cross-sectional data of high cholesterol prevalence were compared with business location data in San Diego County. It was hypothesized that increased access to grocery stores would be associated with lower prevalence of high cholesterol.
+
+Methods
+=======
+
+#### Data collection
+
+High cholesterol prevalence data was provided by the CDC PLACES project [@cdc2021]. Data used from this source was limited to San Diego County and its 626 Census tracts' boundaries. One Census tract out of the 626 was removed from analysis due to it consisting entirely of a U.S. Marine base. The CDC PLACES population data estimates are derived from the CDC Behavior Risk Factor Surveillance System, the Census 2010 population, the American Community Survey, and other nationwide health surveys.
+
+Community access to healthy foods was determined using grocery store location data from the ArcGIS Community Analyst online service [@esri2021]. The Business and Facilities Search tool from this service was used to obtain necessary information on all businesses in San Diego County labelled as a grocery retail store. The data obtained from this source was provided by Data Axle company [@dataaxle2021].
+
+#### Statistical Analyses
+
+ArcGIS Pro 2.8.3 was used for all spatial analyses and R 4.1.1 was used for statistical analyses. Trends and abnormalities in the distribution of high cholesterol prevalence was determined by comparing Census tracts with each other. Grocery store density within San Diego County was calculated using the Kernel Density tool from ArcGIS Pro. This tool is based on a formula described on page 76 in the book *Density Estimation for Statistics and Data Analysis* [@silverman1986]. Census tracts were joined with grocery store locations to count the number of grocery stores within the boundaries of each Census tract in addition to grocery stores within a mile of those boundaries.
+
+To numerically describe the relationship between prevalence points and number of nearby grocery stores within each Census tract, high cholesterol prevalence was normalized on a per grocery store basis. This was used to describe how many prevalence points existed alongside an average grocery store. Examination of the relationship between these two variables was performed by using generalized linear regression to predict Census tract high cholesterol prevalence using the number of nearby grocery stores. Residuals of this model were mapped to identify outlying over- and underestimations of high cholesterol prevalence. 
+
+Results
+=======
+
+#### Descriptive Statistics
+
+The median high cholesterol prevalence was 28.5% (8.8 - 45.0%). Distribution of high cholesterol prevalence throughout San Diego County is shown in **Figure \ref{fig1}**. The median number of nearby grocery stores was 10 (0 - 52). There were eight Census tracts that did not have a grocery store either within their boundaries or within a mile of their boundaries. The median prevalence of high cholesterol with these eight tracts was 33.0% (30.0 - 36.8%)
+
+```{r tableone, include=FALSE}
+tab1 <- CreateTableOne(vars = tab_vars, data = df)
+tab1_print <- print(tab1, nonnormal = non_vars, minMax = T)
+rownames(tab1_print) <- c("Census tracts (n)",
+                          "High cholesterol prevalence (%)",
+                          "Nearby grocery stores",
+                          "Total population",
+                          "Census tract square mileage")
+colnames(tab1_print) <- c("Value")
+```
+```{r tableone_print, echo=FALSE}
+tab1_print %>% kableone(caption = "Demographics",
+                        format = "latex",
+                        booktab = T) %>% 
+  footnote(general = "mean (SD); median [min, max]")
+```
+
+#### Grocery Store Density
+
+Density of grocery stores throughout San Diego County was rasterized in **Figure \ref{fig2}**. The downtown metropolitan region of San Diego County had the greatest density of grocery stores. In the northern region, the greatest density was observed along the California SR-78 highway from Oceanside to Escondido. Number of grocery stores within a Census tract and within a mile of a tract's boundaries were shown with **Figure \ref{fig3}**. The downtown tracts with the greatest number of nearby grocery stores were within the neighborhoods of East Village, Logan Heights, South Park, and North Park. Areas around the San Diego State University also had large numbers of nearby grocery stores, specifically the neighborhoods of College West and City Heights.
+
+#### Relationship Between High Cholesterol and Nearby Grocery Stores
+
+High cholesterol prevalence points per grocery store were mapped by San Diego County Census tracts in **Figure \ref{fig4}**. The median high cholesterol prevalence points per grocery store was 3.0% (0.5 - 39.9%). Over 90% of tracts had 10 prevalence points or fewer for every nearby grocery store.
+
+#### Generalized Linear Regression and Residuals
+
+There is a moderate negative correlation between high cholesterol prevalence and nearby grocery stores (R = -0.32, p<.001). When fit to a linear regression model, every 10 nearby grocery stores was associated with a decrease in the average Census tract's high cholesterol prevalence by 1.6% (95% CI = -2.0%, -1.2%). Each Census tract's residual from this model was shown in **Figure \ref{fig5}**. Three tracts in the northern half of San Diego County had their residuals greater than 2.5 standard deviations from the predicted high cholesterol prevalence. Fifteen tracts in the south western region had residuals less than -2.5 standard deviations from the the predicted prevalence.
+
+Discussion
+==========
+
+The moderate negative correlation between high cholesterol prevalence and number of nearby grocery stores may suggest that access to healthy foods may affect individual health in the county of San Diego. Many of the Census tracts with large high cholesterol prevalences and few grocery store options were located away from the urbanized areas of the county. For example, nearly all of the rural Census tracts had a high cholesterol prevalence greater than the mean. This could likely be due to the distance of the nearest grocery store and lack of variety to choose from. Tracts within the densely populated urban areas often had high counts of nearby grocery stores and relatively low prevalences of high cholesterol.
+
+Variables included in the regression models were limited to those provided by the data sources used in this research. Collection and use of more variables such as individual demographic characteristics may allow for the development of a stronger model. Another method to improve accuracy of analyses would be to include street and sidewalk data to determine the travel distance to grocery stores rather than the general spatial distance. This would be more realistic as it could estimate the time required of an individual to travel to grocery store locations.
+
+The residual outliers displayed in **Figure \ref{fig5}** represent Census tracts that either had large high cholesterol prevalences regardless of the many grocery store options, or low prevalences with little or no nearby grocery stores.  A possible explanation could be the presence of parks and various outdoor activities, or a lack thereof. Further research into these Census tracts is needed to determine potential factors in this observed finding.
+
+Conclusion
+==========
+
+High cholesterol is a risk factor of heart disease, the modern number one cause of death in San Diego County. The effect of environmental factors, such as neighborhood structure, upon individual health continues to be widely researched. This study provides evidence supporting the hypothesis that a lack of access to healthy foods is associated with impaired health statuses. Further research is needed to strengthen this conclusion and provide vital information to public policy making processes.
+
+\pagebreak
+
+![High cholesterol prevalence by San Diego County Census tracts.\label{fig1}]("../map1.png")
+
+![Grocery store density throughout San Diego County.\label{fig2}]("../map2.png")
+
+![Number of grocery stores inside or within one mile of San Diego Census tracts.\label{fig3}]("../map3.png")
+
+![High cholesteroal prevalence points per grocery store by San Diego County Census tracts.\label{fig4}]("../map4.png")
+
+![Standardized residuals of generalized linear model by San Diego County Census tracts.\label{fig5}]("../map5.png")
+
+References {#references .unnumbered}
+==========
